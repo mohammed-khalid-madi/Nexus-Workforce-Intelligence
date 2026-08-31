@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus — Workforce Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090F;
+  --surface:#0C1118;
+  --surface2:#111827;
+  --surface3:#162033;
+  --border:#1C2A3A;
+  --border2:#243447;
+  --t1:#EDF2FF;
+  --t2:#8BA4BF;
+  --t3:#4A6177;
+  --teal:#00C9A7;
+  --teal-dim:#00C9A720;
+  --teal-mid:#00C9A740;
+  --violet:#7C5CFC;
+  --violet-dim:#7C5CFC20;
+  --amber:#F0A500;
+  --amber-dim:#F0A50020;
+  --red:#F05C5C;
+  --red-dim:#F05C5C20;
+  --green:#22C55E;
+  --green-dim:#22C55E20;
+  --fd:'Space Grotesk',sans-serif;
+  --fb:'Inter',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--fb);-webkit-font-smoothing:antialiased;}
+html[dir="rtl"] body,html[dir="rtl"] h1,html[dir="rtl"] h2,html[dir="rtl"] h3,html[dir="rtl"] h4,html[dir="rtl"] h5{font-family:'Tajawal','Inter',sans-serif;}
+html[dir="rtl"] .clock,html[dir="rtl"] .clock-time,html[dir="rtl"] .goal-nums,html[dir="rtl"] .sc-val,html[dir="rtl"] .clock-hrs{font-family:var(--fm);}
+html[dir="rtl"] .sb{border-right:none;border-left:1px solid var(--border);}
+html[dir="rtl"] .sb-a.on::before{left:auto;right:0;}
+html[dir="rtl"] .report-summary{border-left:none;border-right:2px solid var(--border2);padding-left:0;padding-right:12px;}
+html[dir="rtl"] .toast{right:auto;left:24px;}
+html[dir="rtl"] .sb-badge{margin-left:0;margin-right:auto;}
+html[dir="rtl"] .rb,html[dir="rtl"] .sb-foot-btn{text-align:right;}
+html[dir="rtl"] th{text-align:right;}
+button{cursor:pointer;font-family:var(--fb);}
+input,select,textarea{font-family:var(--fb);}
+h1,h2,h3,h4,h5{font-family:var(--fd);}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── CANVAS BG ── */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;}
+#root{position:relative;z-index:1;min-height:100vh;}
+
+/* ── LOGIN ── */
+.lw{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;}
+.lw::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,201,167,.08),transparent 70%),radial-gradient(ellipse 60% 40% at 100% 100%,rgba(124,92,252,.07),transparent 70%);pointer-events:none;}
+.lc{width:100%;max-width:420px;background:rgba(12,17,24,.8);backdrop-filter:blur(24px);border:1px solid var(--border2);border-radius:20px;padding:40px 36px;box-shadow:0 0 0 1px rgba(0,201,167,.06),0 40px 80px -30px rgba(0,0,0,.6);}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
+.logo-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--violet));display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff;font-family:var(--fd);}
+.logo-text{font-family:var(--fd);font-weight:700;font-size:18px;letter-spacing:-.02em;}
+.logo-text span{color:var(--teal);}
+.lc h1{font-size:28px;font-weight:700;letter-spacing:-.03em;margin-bottom:8px;}
+.lc p{color:var(--t2);font-size:13.5px;line-height:1.6;margin-bottom:28px;}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.rb{border:1px solid var(--border2);background:var(--surface2);border-radius:14px;padding:16px 14px;text-align:left;transition:all .2s;color:var(--t1);}
+.rb:hover{border-color:var(--teal);background:var(--teal-dim);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,201,167,.12);}
+.rb .rbi{font-size:20px;display:block;margin-bottom:8px;}
+.rb .rbl{font-family:var(--fd);font-weight:600;font-size:14px;display:block;margin-bottom:2px;}
+.rb .rbs{font-size:12px;color:var(--t2);}
+.emp-block{display:none;margin-top:4px;}
+.field-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:8px;}
+.inp{width:100%;padding:10px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;color:var(--t1);font-size:13.5px;transition:border-color .15s;}
+.inp:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim);}
+.btn{border:none;border-radius:9px;padding:11px 20px;font-weight:600;font-size:13.5px;transition:all .15s;letter-spacing:.01em;}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-teal{background:linear-gradient(135deg,var(--teal),#00A88E);color:#030A09;box-shadow:0 4px 16px rgba(0,201,167,.25);}
+.btn-teal:hover:not(:disabled){box-shadow:0 6px 24px rgba(0,201,167,.35);transform:translateY(-1px);}
+.btn-primary{background:var(--surface3);color:var(--t1);border:1px solid var(--border2);}
+.btn-primary:hover:not(:disabled){border-color:var(--border2);background:var(--surface2);}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--border);}
+.btn-ghost:hover:not(:disabled){border-color:var(--border2);color:var(--t1);}
+.btn-violet{background:linear-gradient(135deg,var(--violet),#5B3DD4);color:#fff;box-shadow:0 4px 16px rgba(124,92,252,.25);}
+.btn-violet:hover:not(:disabled){box-shadow:0 6px 24px rgba(124,92,252,.35);transform:translateY(-1px);}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:7px;}
+.btn-go{width:100%;margin-top:16px;}
+.login-note{margin-top:20px;font-size:11px;color:var(--t3);text-align:center;line-height:1.5;}
+
+/* ── SHELL ── */
+.shell{display:flex;min-height:100vh;}
+/* ── SIDEBAR ── */
+.sb{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 12px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-logo{display:flex;align-items:center;gap:9px;padding:0 8px 20px;margin-bottom:8px;border-bottom:1px solid var(--border);}
+.sb-logo .logo-mark{width:28px;height:28px;font-size:12px;}
+.sb-logo .logo-text{font-size:16px;}
+.sb-user{padding:12px 10px;margin-bottom:12px;border-radius:10px;background:var(--surface2);}
+.sb-user .name{font-weight:600;font-size:13px;color:var(--t1);}
+.sb-user .role-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--teal);margin-top:4px;}
+.sb-user .role-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--teal);}
+.sb-sec{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:0 10px;margin:12px 0 4px;}
+.sb-nav{display:flex;flex-direction:column;gap:1px;flex:1;}
+.sb-a{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;color:var(--t2);font-size:13px;font-weight:500;background:transparent;border:none;text-align:left;width:100%;transition:all .15s;position:relative;}
+.sb-a:hover{color:var(--t1);background:var(--surface2);}
+.sb-a.on{color:var(--teal);background:var(--teal-dim);}
+.sb-a.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--teal);border-radius:2px;}
+.sb-a .sb-ic{width:16px;height:16px;opacity:.8;flex-shrink:0;}
+.sb-a.on .sb-ic{opacity:1;}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:10px;line-height:1;}
+.sb-foot{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px;}
+.sb-foot-btn{width:100%;text-align:left;background:transparent;border:none;color:var(--t3);font-size:12px;padding:8px 10px;border-radius:7px;display:flex;align-items:center;gap:8px;}
+.sb-foot-btn:hover{color:var(--t1);background:var(--surface2);}
+
+/* ── MAIN ── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);background:rgba(7,9,15,.6);backdrop-filter:blur(12px);position:sticky;top:0;z-index:10;}
+.topbar-left h2{font-size:20px;font-weight:700;letter-spacing:-.02em;}
+.topbar-left p{font-size:12px;color:var(--t2);margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.clock{font-family:var(--fm);font-size:12px;color:var(--t2);background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 12px;}
+.content{flex:1;padding:28px 32px 60px;}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s;}
+.sc:hover{border-color:var(--border2);}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--sc-accent,var(--teal)),transparent);opacity:.5;}
+.sc .sc-icon{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-size:16px;margin-bottom:12px;background:var(--sc-dim,var(--teal-dim));}
+.sc .sc-val{font-family:var(--fm);font-weight:600;font-size:28px;letter-spacing:-.02em;margin-bottom:4px;}
+.sc .sc-lbl{font-size:12px;color:var(--t2);}
+.sc .sc-trend{font-size:11px;margin-top:6px;font-weight:600;}
+.sc .sc-trend.up{color:var(--green);}
+.sc .sc-trend.dn{color:var(--red);}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:18px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.card-head h3{font-size:14.5px;font-weight:600;}
+.card-head-left{display:flex;align-items:center;gap:10px;}
+.chart-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:18px;}
+.chart-box{position:relative;height:220px;}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;color:var(--t3);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;border-bottom:1px solid var(--border);}
+td{padding:12px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--t2);}
+td strong{color:var(--t1);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.015);}
+.empty-row{padding:40px 12px;text-align:center;color:var(--t3);font-size:13px;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.02em;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.b-teal{background:var(--teal-dim);color:var(--teal);}
+.b-amber{background:var(--amber-dim);color:var(--amber);}
+.b-red{background:var(--red-dim);color:var(--red);}
+.b-gray{background:rgba(255,255,255,.06);color:var(--t2);}
+.b-violet{background:var(--violet-dim);color:var(--violet);}
+.b-green{background:var(--green-dim);color:var(--green);}
+
+/* ── AVATAR ── */
+.av{border-radius:50%;display:inline-grid;place-items:center;font-family:var(--fd);font-weight:700;color:#fff;flex-shrink:0;font-size:11px;}
+.av-30{width:30px;height:30px;}
+.av-40{width:40px;height:40px;font-size:14px;}
+.av-54{width:54px;height:54px;font-size:18px;}
+.row-name{display:flex;align-items:center;gap:9px;}
+.row-sub{font-size:11px;color:var(--t3);}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);}
+.field .inp, .field select, .field textarea{background:var(--surface2);border:1px solid var(--border2);color:var(--t1);border-radius:9px;padding:10px 13px;font-size:13.5px;width:100%;}
+.field select option{background:var(--surface2);}
+.field textarea{resize:vertical;min-height:90px;}
+.field .inp:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim);}
+
+/* ── AI BADGE ── */
+.ai-tag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--violet);background:var(--violet-dim);border:1px solid rgba(124,92,252,.3);border-radius:20px;padding:3px 10px;}
+.ai-tag::before{content:'◈';font-size:10px;}
+
+/* ── GAUGE ── */
+.gauge{position:relative;flex-shrink:0;}
+.gauge svg{transform:rotate(-90deg);}
+.gauge .gv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.gauge .gn{font-family:var(--fm);font-weight:600;}
+.gauge .gs{font-size:9px;color:var(--t3);}
+
+/* ── REPORT ── */
+.report-card{border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:12px;background:linear-gradient(135deg,var(--surface),var(--surface2));}
+.report-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;}
+.report-info{flex:1;}
+.report-name{font-weight:600;font-size:14px;margin-bottom:2px;}
+.report-meta{font-size:11px;color:var(--t3);}
+.report-summary{font-size:13px;line-height:1.65;color:var(--t2);margin-bottom:14px;border-left:2px solid var(--border2);padding-left:12px;}
+.report-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.report-col h5{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.report-col ul{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.report-col li{font-size:12.5px;color:var(--t2);display:flex;align-items:flex-start;gap:7px;}
+.report-col li::before{content:'';flex-shrink:0;width:4px;height:4px;border-radius:50%;margin-top:5px;}
+.rc-s h5{color:var(--teal);}
+.rc-s li::before{background:var(--teal);}
+.rc-i h5{color:var(--amber);}
+.rc-i li::before{background:var(--amber);}
+
+/* ── GOALS ── */
+.goal-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--surface);}
+.goal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
+.goal-title{font-weight:600;font-size:13px;}
+.goal-nums{font-family:var(--fm);font-size:12px;color:var(--t2);}
+.progress-track{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s cubic-bezier(.4,0,.2,1);}
+.goal-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11px;color:var(--t3);flex-wrap:wrap;gap:8px;}
+.goal-upd{display:flex;gap:6px;align-items:center;}
+.goal-upd input{width:70px;padding:5px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--t1);font-size:12px;}
+
+/* ── ALERTS ── */
+.alerts-box{border:1px solid rgba(240,165,0,.25);background:rgba(240,165,0,.04);border-radius:12px;overflow:hidden;margin-bottom:20px;}
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(240,165,0,.1);}
+.alert-item:last-child{border-bottom:none;}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:4px;}
+.alert-text{font-size:12.5px;color:var(--t2);line-height:1.5;}
+.alert-text b{color:var(--t1);}
+
+/* ── CLOCK IN ── */
+.clock-hero{text-align:center;padding:40px 20px;}
+.clock-time{font-family:var(--fm);font-size:52px;font-weight:600;letter-spacing:-.03em;color:var(--t1);margin:16px 0 8px;}
+.clock-date{font-size:13px;color:var(--t2);margin-bottom:32px;}
+.clock-ring{width:180px;height:180px;border-radius:50%;position:relative;margin:0 auto 24px;cursor:pointer;border:none;background:transparent;display:flex;align-items:center;justify-content:center;}
+.clock-ring .cr-track{position:absolute;inset:0;border-radius:50%;border:3px solid var(--border2);}
+.clock-ring .cr-fill{position:absolute;inset:0;border-radius:50%;transition:all .3s;}
+.clock-ring .cr-inner{width:140px;height:140px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;position:relative;z-index:1;border:1px solid var(--border2);box-shadow:0 0 40px rgba(0,0,0,.4);}
+.clock-ring .cr-label{font-family:var(--fd);font-size:16px;font-weight:700;}
+.clock-ring .cr-sub{font-size:11px;color:var(--t2);margin-top:2px;}
+.clock-ring.in .cr-fill{border:3px solid transparent;border-top-color:var(--red);border-right-color:var(--red);box-shadow:0 0 30px var(--red-dim);}
+.clock-ring.out .cr-fill{border:3px solid transparent;border-top-color:var(--teal);border-right-color:var(--teal);box-shadow:0 0 30px var(--teal-mid);}
+.clock-ring:hover .cr-inner{background:var(--surface3);}
+.clock-hrs{font-family:var(--fm);font-size:28px;font-weight:600;margin-bottom:4px;}
+.clock-hlbl{font-size:12px;color:var(--t2);}
+.att-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;}
+.att-pill .ap-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 2s infinite;}
+.att-in{color:var(--teal);background:var(--teal-dim);border:1px solid rgba(0,201,167,.2);}
+.att-out{color:var(--t2);background:var(--surface2);border:1px solid var(--border);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── AI CHAT ── */
+.chat-wrap{display:flex;flex-direction:column;height:520px;}
+.chat-log{flex:1;overflow-y:auto;padding:4px 0 12px;display:flex;flex-direction:column;gap:12px;}
+.chat-bubble{max-width:82%;padding:12px 15px;border-radius:14px;font-size:13px;line-height:1.6;}
+.chat-bubble.u{align-self:flex-end;background:linear-gradient(135deg,var(--violet),#5B3DD4);color:#fff;border-bottom-right-radius:4px;}
+.chat-bubble.a{align-self:flex-start;background:var(--surface2);border:1px solid var(--border2);color:var(--t2);border-bottom-left-radius:4px;}
+.chat-bubble.a .ai-sender{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--violet);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.chat-bubble.a .ai-sender::before{content:'◈';}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.chip{border:1px solid var(--border2);background:transparent;color:var(--t2);border-radius:20px;padding:6px 12px;font-size:11.5px;transition:all .15s;}
+.chip:hover{border-color:var(--violet);color:var(--violet);background:var(--violet-dim);}
+.chat-input-row{display:flex;gap:8px;border-top:1px solid var(--border);padding-top:14px;}
+.chat-input-row .inp{flex:1;}
+.typing{display:flex;align-items:center;gap:4px;padding:8px 0;}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--t3);animation:bounce .8s infinite;}
+.typing span:nth-child(2){animation-delay:.15s;}
+.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:28px 30px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.6);}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:20px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border2);color:var(--t1);padding:13px 18px;border-radius:11px;font-size:13px;box-shadow:0 20px 40px rgba(0,0,0,.5);z-index:60;display:flex;align-items:center;gap:10px;max-width:320px;animation:slideUp .3s ease;}
+.toast::before{content:'✓';width:20px;height:20px;background:var(--teal);color:#000;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.toast.err{border-color:rgba(240,92,92,.3);background:rgba(240,92,92,.1);}
+.toast.err::before{content:'!';background:var(--red);color:#fff;}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:56px 20px;color:var(--t3);}
+.empty .eic{font-size:36px;display:block;margin-bottom:12px;filter:grayscale(1);opacity:.5;}
+.empty .etitle{font-family:var(--fd);font-size:15px;font-weight:600;color:var(--t2);margin-bottom:6px;}
+.empty p{font-size:13px;line-height:1.55;}
+
+/* ── SPINNER ── */
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .6s linear infinite;vertical-align:middle;}
+.spin.v{border:2px solid var(--violet-dim);border-top-color:var(--violet);}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.toolbar .inp, .toolbar select{padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--t1);font-size:12.5px;}
+.toolbar select option{background:var(--surface2);}
+
+/* ── PROFILE HERO ── */
+.profile-hero{background:linear-gradient(135deg,var(--surface2),var(--surface3));border:1px solid var(--border);border-radius:16px;padding:28px 24px;display:flex;align-items:center;gap:20px;margin-bottom:18px;position:relative;overflow:hidden;}
+.profile-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,var(--teal-dim),transparent 70%);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:760px){
+  .shell{flex-direction:column;}
+  .sb{width:100%;height:auto;flex-direction:row;overflow-x:auto;padding:10px;position:relative;}
+  .sb-logo,.sb-user,.sb-sec,.sb-foot{display:none;}
+  .sb-nav{flex-direction:row;gap:4px;}
+  .content{padding:16px 14px 40px;}
+  .stat-row{grid-template-columns:1fr 1fr;}
+  .chart-grid,.form-grid,.report-cols{grid-template-columns:1fr;}
+  .topbar{padding:12px 16px;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="root"></div>
+
+<script>
+/* ── CANVAS BACKGROUND ── */
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;pts=Array.from({length:55},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5}));}
+  window.addEventListener('resize',resize);resize();
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,201,167,0.45)';
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    });
+    ctx.strokeStyle='rgba(0,201,167,0.06)';ctx.lineWidth=1;
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<140){ctx.globalAlpha=(140-d)/140*.4;ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke();}
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── STATE ── */
+const S={
+  loaded:false,employees:[],interactions:[],reports:[],goals:[],attendance:[],
+  session:null,route:'dashboard',busyId:null,toast:null,aiChat:[],aiBusy:false,
+  filters:{text:'',outcome:'',eid:''},charts:{},lang:'en'
+};
+
+/* ── I18N ──
+   Covers the app's static UI text (navigation, headings, labels, buttons,
+   table headers, empty states, toasts). Dynamically generated business
+   content — seeded demo names, AI narrative sentences, alerts, chat
+   answers — stays in English since it's produced by the analysis engine
+   itself, not fixed UI copy. */
+const I18N={
+  appName:{en:'Nexus',ar:'نيكسس'},
+  navDashboard:{en:'Dashboard',ar:'لوحة التحكم'},
+  navTeam:{en:'Team',ar:'الفريق'},
+  navInteractions:{en:'Interactions',ar:'التفاعلات'},
+  navPerformance:{en:'Performance',ar:'الأداء'},
+  navGoals:{en:'Goals',ar:'الأهداف'},
+  navAttendance:{en:'Attendance',ar:'الحضور'},
+  navAssistant:{en:'AI Assistant',ar:'المساعد الذكي'},
+  navProfile:{en:'My profile',ar:'ملفي الشخصي'},
+  navLog:{en:'Log interaction',ar:'تسجيل تفاعل'},
+  navHistory:{en:'My interactions',ar:'تفاعلاتي'},
+  navMyPerf:{en:'My performance',ar:'أدائي'},
+  navMyGoals:{en:'My goals',ar:'أهدافي'},
+  navClock:{en:'Clock in / out',ar:'تسجيل الحضور والانصراف'},
+  titleDashboard:{en:'Dashboard',ar:'لوحة التحكم'},
+  titleTeam:{en:'Team',ar:'الفريق'},
+  titleInteractions:{en:'Interactions',ar:'التفاعلات'},
+  titlePerformance:{en:'Performance',ar:'الأداء'},
+  titleGoals:{en:'Goals & KPIs',ar:'الأهداف ومؤشرات الأداء'},
+  titleAttendance:{en:'Attendance',ar:'الحضور'},
+  titleAssistant:{en:'AI Assistant',ar:'المساعد الذكي'},
+  titleProfile:{en:'My profile',ar:'ملفي الشخصي'},
+  titleLog:{en:'Log interaction',ar:'تسجيل تفاعل'},
+  titleHistory:{en:'My interactions',ar:'تفاعلاتي'},
+  titleMyPerf:{en:'My performance',ar:'أدائي'},
+  titleMyGoals:{en:'My goals',ar:'أهدافي'},
+  titleClock:{en:'Clock in / out',ar:'تسجيل الحضور والانصراف'},
+  subDashboard:{en:'Live snapshot of your team performance and customer interactions.',ar:'لمحة حيّة عن أداء فريقك وتفاعلات العملاء.'},
+  subTeam:{en:'Manage teammates, roles, and departments.',ar:'إدارة أعضاء الفريق والأدوار والأقسام.'},
+  subInteractions:{en:'Every customer interaction logged by your team.',ar:'كل تفاعل عميل سجّله فريقك.'},
+  subPerformance:{en:'Generate and review AI-powered performance evaluations.',ar:'إنشاء ومراجعة تقييمات الأداء المدعومة بالذكاء الاصطناعي.'},
+  subGoals:{en:'Set KPI targets and track progress toward them.',ar:'حدّد أهداف مؤشرات الأداء وتابع التقدم نحوها.'},
+  subAttendance:{en:'See who is clocked in right now and hours logged today.',ar:'اطّلع على من سجّل حضوره الآن وساعات العمل اليوم.'},
+  subAssistant:{en:'Ask plain-language questions about your team.',ar:'اطرح أسئلة بلغة بسيطة عن فريقك.'},
+  subProfile:{en:'Your role, stats, and latest feedback.',ar:'دورك وإحصائياتك وآخر الملاحظات.'},
+  subLog:{en:'Record a customer interaction you just completed.',ar:'سجّل تفاعل عميل أنهيته للتو.'},
+  subHistory:{en:'All the interactions you have logged so far.',ar:'جميع التفاعلات التي سجّلتها حتى الآن.'},
+  subMyPerf:{en:'Your AI-generated performance evaluations.',ar:'تقييمات أدائك المُنشأة بالذكاء الاصطناعي.'},
+  subMyGoals:{en:'The goals and targets your manager has set for you.',ar:'الأهداف التي حدّدها مديرك لك.'},
+  subClock:{en:'Clock in to start your shift, or out when done.',ar:'سجّل الحضور لبدء دوامك، أو الانصراف عند الانتهاء.'},
+  navigation:{en:'Navigation',ar:'التنقل'},
+  manager:{en:'Manager',ar:'مدير'},
+  employee:{en:'Employee',ar:'موظف'},
+  switchAccount:{en:'← Switch account',ar:'→ تبديل الحساب'},
+  loginHeading:{en:'Workforce intelligence<br>for modern teams.',ar:'ذكاء إدارة الموارد البشرية<br>للفرق الحديثة.'},
+  loginSub:{en:'Manage people, track customer interactions, and let AI surface what actually matters.',ar:'أدر فريقك، وتابع تفاعلات العملاء، ودع الذكاء الاصطناعي يبرز لك ما يهم فعلاً.'},
+  loginMgrLbl:{en:'Manager',ar:'مدير'},
+  loginMgrSub:{en:'Full dashboard & AI tools',ar:'لوحة تحكم كاملة وأدوات ذكاء اصطناعي'},
+  loginEmpLbl:{en:'Employee',ar:'موظف'},
+  loginEmpSub:{en:'Log interactions & view feedback',ar:'سجّل التفاعلات واطّلع على الملاحظات'},
+  chooseName:{en:'Choose your name',ar:'اختر اسمك'},
+  selectPlaceholder:{en:'— Select —',ar:'— اختر —'},
+  continueBtn:{en:'Continue →',ar:'← متابعة'},
+  noTeammates:{en:'No teammates added yet — ask your manager first.',ar:'لم تتم إضافة زملاء بعد — اسأل مديرك أولاً.'},
+  loginNote:{en:'Demo sign-in — no password required. All team data is shared across sessions.',ar:'تسجيل دخول تجريبي — لا حاجة لكلمة مرور. تُشارك بيانات الفريق بين الجلسات.'},
+  activeTeammates:{en:'Active teammates',ar:'أعضاء نشطون'},
+  totalInteractions:{en:'Total interactions',ar:'إجمالي التفاعلات'},
+  last30:{en:'Last 30 days',ar:'آخر 30 يوماً'},
+  avgAiScore:{en:'Avg. AI score',ar:'متوسط تقييم الذكاء الاصطناعي'},
+  interactionVolume:{en:'Interaction volume',ar:'حجم التفاعلات'},
+  last8weeks:{en:'Last 8 weeks',ar:'آخر 8 أسابيع'},
+  outcomeBreakdown:{en:'Outcome breakdown',ar:'تفصيل النتائج'},
+  recentInteractions:{en:'Recent interactions',ar:'أحدث التفاعلات'},
+  viewAll:{en:'View all',ar:'عرض الكل'},
+  noInteractionsYet:{en:'No interactions yet',ar:'لا توجد تفاعلات بعد'},
+  noInteractionsBody:{en:'Once your team starts logging customer conversations, they will appear here.',ar:'بمجرد أن يبدأ فريقك بتسجيل محادثات العملاء، ستظهر هنا.'},
+  colTeammate:{en:'Teammate',ar:'العضو'},
+  colCustomer:{en:'Customer',ar:'العميل'},
+  colChannel:{en:'Channel',ar:'القناة'},
+  colOutcome:{en:'Outcome',ar:'النتيجة'},
+  colDate:{en:'Date',ar:'التاريخ'},
+  colTitle:{en:'Title',ar:'المسمى الوظيفي'},
+  colDepartment:{en:'Department',ar:'القسم'},
+  colHired:{en:'Hired',ar:'تاريخ التوظيف'},
+  colStatus:{en:'Status',ar:'الحالة'},
+  colSummary:{en:'Summary',ar:'الملخص'},
+  colAction:{en:'Action',ar:'الإجراء'},
+  colTime:{en:'Time',ar:'الوقت'},
+  colInteractions:{en:'Interactions',ar:'التفاعلات'},
+  colLastEvaluated:{en:'Last evaluated',ar:'آخر تقييم'},
+  teamRoster:{en:'Team roster',ar:'قائمة الفريق'},
+  addTeammate:{en:'+ Add teammate',ar:'+ إضافة عضو'},
+  editTeammate:{en:'Edit teammate',ar:'تعديل عضو'},
+  addTeammateTitle:{en:'Add a teammate',ar:'إضافة عضو'},
+  active:{en:'Active',ar:'نشط'},
+  inactive:{en:'Inactive',ar:'غير نشط'},
+  edit:{en:'Edit',ar:'تعديل'},
+  deactivate:{en:'Deactivate',ar:'إيقاف'},
+  reactivate:{en:'Reactivate',ar:'إعادة تفعيل'},
+  noTeammatesYet:{en:'No teammates yet',ar:'لا يوجد أعضاء بعد'},
+  noTeammatesBody:{en:'Add your first teammate to get started.',ar:'أضف أول عضو للبدء.'},
+  fullName:{en:'Full name',ar:'الاسم الكامل'},
+  email:{en:'Email',ar:'البريد الإلكتروني'},
+  hireDate:{en:'Hire date',ar:'تاريخ التوظيف'},
+  cancel:{en:'Cancel',ar:'إلغاء'},
+  saveChanges:{en:'Save changes',ar:'حفظ التغييرات'},
+  allInteractions:{en:'All interactions',ar:'كل التفاعلات'},
+  shown:{en:'shown',ar:'معروض'},
+  searchPlaceholder:{en:'Search…',ar:'بحث…'},
+  allTeammates:{en:'All teammates',ar:'كل الأعضاء'},
+  allOutcomes:{en:'All outcomes',ar:'كل النتائج'},
+  csvExport:{en:'⬇ CSV',ar:'⬇ تصدير CSV'},
+  noResults:{en:'No results',ar:'لا توجد نتائج'},
+  noResultsBody:{en:'Try adjusting your filters.',ar:'حاول تعديل عوامل التصفية.'},
+  runEvaluation:{en:'Run evaluation',ar:'تشغيل التقييم'},
+  aiPowered:{en:'AI Powered',ar:'مدعوم بالذكاء الاصطناعي'},
+  runAiEvaluation:{en:'Run AI evaluation',ar:'تشغيل تقييم الذكاء الاصطناعي'},
+  evaluating:{en:'Evaluating…',ar:'جارٍ التقييم…'},
+  addTeammatesFirst:{en:'Add teammates first.',ar:'أضف أعضاء الفريق أولاً.'},
+  evaluationHistory:{en:'Evaluation history',ar:'سجل التقييمات'},
+  noEvaluationsYet:{en:'No evaluations yet',ar:'لا توجد تقييمات بعد'},
+  noEvaluationsBody:{en:'Run your first evaluation once a teammate has logged interactions.',ar:'شغّل أول تقييم بعد أن يسجل أحد الأعضاء تفاعلاته.'},
+  goalsKpis:{en:'Goals & KPIs',ar:'الأهداف ومؤشرات الأداء'},
+  setGoal:{en:'+ Set goal',ar:'+ تحديد هدف'},
+  setGoalTitle:{en:'Set a goal',ar:'تحديد هدف'},
+  noGoalsSet:{en:'No goals set',ar:'لا توجد أهداف محددة'},
+  noGoalsBody:{en:'Set targets for your teammates to start tracking their progress.',ar:'حدّد أهدافاً لأعضاء فريقك لبدء تتبع تقدّمهم.'},
+  teammate:{en:'Teammate',ar:'العضو'},
+  goalTitleLbl:{en:'Goal title',ar:'عنوان الهدف'},
+  goalTitlePh:{en:'Resolve 50 tickets this month',ar:'حل 50 تذكرة هذا الشهر'},
+  target:{en:'Target',ar:'الهدف الرقمي'},
+  unit:{en:'Unit',ar:'الوحدة'},
+  unitPh:{en:'tickets, calls…',ar:'تذاكر، مكالمات…'},
+  dueDate:{en:'Due date',ar:'تاريخ الاستحقاق'},
+  update:{en:'Update',ar:'تحديث'},
+  overdue:{en:'Overdue',ar:'متأخر'},
+  due:{en:'Due',ar:'الاستحقاق'},
+  complete:{en:'complete',ar:'مكتمل'},
+  teamAttendanceToday:{en:'Team attendance today',ar:'حضور الفريق اليوم'},
+  addTeammatesAttendance:{en:'Add teammates to track attendance.',ar:'أضف أعضاء لتتبع الحضور.'},
+  clockedIn:{en:'Clocked in',ar:'حاضر'},
+  clockedOut:{en:'Clocked out',ar:'غير حاضر'},
+  currentlyClockedIn:{en:'Currently clocked in',ar:'حاضر الآن'},
+  currentlyClockedOut:{en:'Currently clocked out',ar:'غير حاضر الآن'},
+  lastAction:{en:'Last action',ar:'آخر إجراء'},
+  hoursToday:{en:'Hours today',ar:'ساعات اليوم'},
+  hrs:{en:'hrs',ar:'ساعة'},
+  aiTeamAssistant:{en:'AI Team Assistant',ar:'مساعد الفريق الذكي'},
+  liveTeamData:{en:'Live team data',ar:'بيانات الفريق الحيّة'},
+  nexusAi:{en:'Nexus AI',ar:'نيكسس الذكي'},
+  askMeAboutTeam:{en:'Ask me about your team',ar:'اسألني عن فريقك'},
+  askMeBody:{en:'I can see live interaction counts, AI scores, goals, and attendance status.',ar:'يمكنني الاطلاع على عدد التفاعلات الحيّة وتقييمات الذكاء الاصطناعي والأهداف وحالة الحضور.'},
+  askAboutTeamPh:{en:'Ask about your team…',ar:'اسأل عن فريقك…'},
+  send:{en:'Send',ar:'إرسال'},
+  chip1:{en:'Who needs coaching?',ar:'من يحتاج إلى توجيه؟'},
+  chip2:{en:'Summarize team performance.',ar:'لخّص أداء الفريق.'},
+  chip3:{en:'Which goals are at risk?',ar:'ما الأهداف المعرّضة للخطر؟'},
+  chip4:{en:'Who has the best outcomes?',ar:'من لديه أفضل النتائج؟'},
+  profileNotFound:{en:'Profile not found',ar:'الملف الشخصي غير موجود'},
+  joined:{en:'Joined',ar:'انضم في'},
+  latestScore:{en:'Latest score',ar:'آخر تقييم'},
+  interactionsLogged:{en:'Interactions logged',ar:'التفاعلات المسجّلة'},
+  latestAiScore:{en:'Latest AI score',ar:'آخر تقييم ذكاء اصطناعي'},
+  latestPerfFeedback:{en:'Latest performance feedback',ar:'آخر ملاحظات الأداء'},
+  aiGenerated:{en:'AI generated',ar:'من إنشاء الذكاء الاصطناعي'},
+  logCustomerInteraction:{en:'Log a customer interaction',ar:'تسجيل تفاعل عميل'},
+  customerName:{en:'Customer name',ar:'اسم العميل'},
+  customerNamePh:{en:'e.g. Alex Morgan',ar:'مثال: أحمد محمد'},
+  channel:{en:'Channel',ar:'القناة'},
+  outcome:{en:'Outcome',ar:'النتيجة'},
+  whatHappened:{en:'What happened?',ar:'ماذا حدث؟'},
+  whatHappenedPh:{en:"Describe the interaction, the customer's need, and how it went.",ar:'صف التفاعل واحتياج العميل وكيف سار الأمر.'},
+  logInteraction:{en:'Log interaction',ar:'تسجيل التفاعل'},
+  myInteractions:{en:'My interactions',ar:'تفاعلاتي'},
+  nothingLoggedYet:{en:'Nothing logged yet',ar:'لا شيء مسجّل بعد'},
+  nothingLoggedBody:{en:'Log your first customer interaction to start your record.',ar:'سجّل أول تفاعل عميل لبدء سجلّك.'},
+  myPerfEvals:{en:'My performance evaluations',ar:'تقييمات أدائي'},
+  noEvalsYetEmp:{en:'No evaluations yet',ar:'لا توجد تقييمات بعد'},
+  noEvalsYetEmpBody:{en:'Your manager generates these based on your logged interactions.',ar:'يُنشئها مديرك بناءً على تفاعلاتك المسجّلة.'},
+  myGoals:{en:'My goals',ar:'أهدافي'},
+  noGoalsAssigned:{en:'No goals assigned',ar:'لا توجد أهداف مسندة'},
+  noGoalsAssignedBody:{en:'Your manager will set targets here for you to track and hit.',ar:'سيحدد مديرك أهدافاً هنا لتتابعها وتحققها.'},
+  hoursLoggedToday:{en:'hours logged today',ar:'ساعات مسجّلة اليوم'},
+  lastActionLbl:{en:'last action',ar:'آخر إجراء'},
+  clockOut:{en:'Clock Out',ar:'تسجيل الانصراف'},
+  clockIn:{en:'Clock In',ar:'تسجيل الحضور'},
+  tapToEnd:{en:'Tap to end shift',ar:'اضغط لإنهاء الدوام'},
+  tapToStart:{en:'Tap to start',ar:'اضغط للبدء'},
+  todaysLog:{en:"Today's log",ar:'سجل اليوم'},
+  noActivityToday:{en:'No activity yet today.',ar:'لا يوجد نشاط اليوم بعد.'},
+  strengths:{en:'Strengths',ar:'نقاط القوة'},
+  areasToDevelop:{en:'Areas to develop',ar:'مجالات التطوير'},
+  basedOn:{en:'based on',ar:'استناداً إلى'},
+  interactionWord:{en:'interaction',ar:'تفاعل'},
+  formerTeammate:{en:'Former teammate',ar:'عضو سابق'},
+  former:{en:'Former',ar:'سابق'},
+  toastChooseYourName:{en:'Choose your name.',ar:'اختر اسمك.'},
+  toastNoInteractionsEval:{en:'No interactions to evaluate yet.',ar:'لا توجد تفاعلات لتقييمها بعد.'},
+  toastEvalComplete:{en:'AI evaluation complete for',ar:'اكتمل تقييم الذكاء الاصطناعي لـ'},
+  toastTeammateUpdated:{en:'Teammate updated.',ar:'تم تحديث بيانات العضو.'},
+  toastTeammateAdded:{en:'Teammate added.',ar:'تمت إضافة العضو.'},
+  toastInteractionLogged:{en:'Interaction logged.',ar:'تم تسجيل التفاعل.'},
+  toastGoalSet:{en:'Goal set.',ar:'تم تحديد الهدف.'},
+  toastProgressUpdated:{en:'Progress updated.',ar:'تم تحديث التقدّم.'},
+  toastClockedOut:{en:'Clocked out.',ar:'تم تسجيل الانصراف.'},
+  toastClockedIn:{en:'Clocked in.',ar:'تم تسجيل الحضور.'},
+  toastSaveFailed:{en:'Save failed.',ar:'فشل الحفظ.'},
+};
+function t(k){const e=I18N[k];if(!e)return k;return e[S.lang]||e.en;}
+const OUTLABEL={
+  en:{Resolved:'Resolved',Positive:'Positive',Neutral:'Neutral','Follow-up needed':'Follow-up needed',Escalated:'Escalated',Negative:'Negative',Phone:'Phone',Email:'Email','Live chat':'Live chat','In person':'In person','Social media':'Social media'},
+  ar:{Resolved:'تم الحل',Positive:'إيجابي',Neutral:'محايد','Follow-up needed':'يحتاج متابعة',Escalated:'تم التصعيد',Negative:'سلبي',Phone:'هاتف',Email:'بريد إلكتروني','Live chat':'محادثة مباشرة','In person':'حضورياً','Social media':'وسائل التواصل'},
+};
+function oLabel(v){return(OUTLABEL[S.lang]&&OUTLABEL[S.lang][v])||v;}
+function locale(){return S.lang==='ar'?'ar':undefined;}
+async function setLang(l){
+  S.lang=l;document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';render();
+}
+const KEYS={emp:'emp_nx1',int:'int_nx1',rep:'rep_nx1',goal:'goal_nx1',att:'att_nx1'};
+const AVC=['#00C9A7','#7C5CFC','#F0A500','#F05C5C','#3B82F6','#EC4899'];
+const DAY=864e5;
+function uid(p){return p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function esc(s){if(!s&&s!==0)return'';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtD(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString(locale(),{month:'short',day:'numeric',year:'numeric'});}
+function fmtT(iso){if(!iso)return'—';return new Date(iso).toLocaleTimeString(locale(),{hour:'numeric',minute:'2-digit'});}
+function ini(n){return(n||'?').split(' ').filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join('');}
+function avc(id){let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))%AVC.length;return AVC[h];}
+
+/* ── STORAGE ── */
+async function loadL(k){try{const r=await window.storage.get(k,true);return r?JSON.parse(r.value):[]}catch{return[]}}
+async function saveL(k,l){try{await window.storage.set(k,JSON.stringify(l),true)}catch{showToast(t('toastSaveFailed'),1)}}
+async function loadAll(){
+  [S.employees,S.interactions,S.reports,S.goals,S.attendance]=await Promise.all([
+    loadL(KEYS.emp),loadL(KEYS.int),loadL(KEYS.rep),loadL(KEYS.goal),loadL(KEYS.att)]);
+  if(!S.employees.length){
+    seedDemoData();
+    await Promise.all([saveL(KEYS.emp,S.employees),saveL(KEYS.int,S.interactions),
+      saveL(KEYS.rep,S.reports),saveL(KEYS.goal,S.goals),saveL(KEYS.att,S.attendance)]);
+  }
+  S.loaded=true;
+}
+/* ── DEMO DATA SEED (first run only) ──
+   Populates a realistic, sizeable dataset so the AI analysis has enough
+   real records to work with immediately. */
+function rnd(min,max){return Math.random()*(max-min)+min;}
+function rndi(min,max){return Math.floor(rnd(min,max+1));}
+function pick(arr){return arr[rndi(0,arr.length-1)];}
+function pickN(arr,n){const c=arr.slice();const out=[];for(let i=0;i<n&&c.length;i++)out.push(c.splice(rndi(0,c.length-1),1)[0]);return out;}
+function seedDemoData(){
+  const now=Date.now();
+  const EMP_DEFS=[
+    ["Sarah Chen","Customer Success Manager","Customer Success",0.85],
+    ["Marcus Webb","Support Specialist","Technical Support",0.55],
+    ["Priya Patel","Senior Support Specialist","Technical Support",0.8],
+    ["Diego Ramirez","Sales Associate","Sales",0.62],
+    ["Aisha Mahmoud","Account Manager","Customer Success",0.78],
+    ["Liam O\u2019Connor","Support Specialist","Technical Support",0.4],
+    ["Yuki Tanaka","Customer Success Manager","Customer Success",0.9],
+    ["Fatima Al-Sayed","Team Lead","Customer Success",0.88],
+    ["Noah Bergstrom","Sales Associate","Sales",0.5],
+    ["Grace Okafor","Retention Specialist","Retention",0.7],
+    ["Ethan Brooks","Support Specialist","Technical Support",0.45],
+    ["Mia Kowalski","Account Manager","Customer Success",0.75],
+  ];
+  S.employees=EMP_DEFS.map(([name,role,dept])=>({
+    id:uid('emp'),name,
+    email:name.toLowerCase().replace(/[\u2019']/g,'').replace(/[^a-z\s-]/g,'').trim().split(/\s+/).join('.')+'@nexus.io',
+    role,department:dept,hireDate:new Date(now-rndi(60,900)*DAY).toISOString(),status:'active'}));
+  const SKILL={};EMP_DEFS.forEach(([,,,skill],i)=>SKILL[S.employees[i].id]=skill);
+
+  const CUSTOMERS=['Jordan Lee','Taylor Reed','Casey Morgan','Riley Brooks','Jamie Fox','Avery Stone','Peyton Gray','Morgan Blake','Quinn Ellis','Skyler Vance','Cameron Wells','Drew Hastings','Rowan Pierce','Emerson Cole','Blake Sutton','Harper Nash','Sydney Wren','Dakota Frost','Charlie Vance','Reese Landry'];
+  const CHANNELS=['Phone','Email','Live chat','In person','Social media'];
+  const GOOD=[c=>`Helped ${c} resolve a billing discrepancy after verifying recent charges.`,
+    c=>`Walked ${c} through account setup; issue resolved in a single call.`,
+    c=>`${c} reported a login issue — reset credentials and confirmed access restored.`,
+    c=>`Answered ${c}'s product questions and closed the ticket same day.`,
+    c=>`${c} was very happy with the quick turnaround on their refund request.`,
+    c=>`Resolved a shipping delay concern for ${c} and offered a discount code.`,
+    c=>`${c} praised the support after we fixed a sync issue between devices.`,
+    c=>`Clarified subscription terms for ${c}; no further action needed.`];
+  const NEUT=[c=>`General product walkthrough for ${c}, no issues reported.`,
+    c=>`${c} asked about upcoming features; provided roadmap info.`,
+    c=>`Routine account check-in with ${c}.`];
+  const FOLLOW=[c=>`${c} reported an intermittent sync bug; forwarded to engineering, awaiting fix.`,
+    c=>`Partial resolution for ${c} — waiting on a callback with more details.`,
+    c=>`${c}'s billing issue needs manager approval before we can proceed.`,
+    c=>`Sent ${c} troubleshooting steps; will follow up if issue persists.`];
+  const ESC=[c=>`${c} reported repeated service outages; escalated to engineering.`,
+    c=>`Unable to resolve ${c}'s data loss complaint — escalated to senior support.`,
+    c=>`${c} requested a supervisor after a billing dispute could not be resolved.`,
+    c=>`Critical outage affecting ${c}'s account escalated to the on-call team.`];
+  const NEG=[c=>`${c} was frustrated by long wait times and left dissatisfied.`,
+    c=>`Could not resolve ${c}'s issue; customer expressed strong dissatisfaction.`,
+    c=>`${c} threatened to cancel service after a repeated billing error.`,
+    c=>`Miscommunication led to a negative experience for ${c}.`];
+  function outcomeFor(skill){
+    const r=Math.random();
+    if(r<skill*0.55)return'Resolved';
+    if(r<skill*0.70)return'Positive';
+    if(r<skill*0.78)return'Neutral';
+    if(r<skill*0.78+(1-skill)*0.5)return'Follow-up needed';
+    if(r<skill*0.78+(1-skill)*0.5+(1-skill)*0.3)return'Escalated';
+    return'Negative';
+  }
+  const TMPL={Resolved:GOOD,Positive:GOOD,Neutral:NEUT,'Follow-up needed':FOLLOW,Escalated:ESC,Negative:NEG};
+  S.interactions=[];
+  S.employees.forEach(e=>{
+    const skill=SKILL[e.id],count=rndi(14,32);
+    for(let i=0;i<count;i++){
+      const outcome=outcomeFor(skill),cust=pick(CUSTOMERS);
+      const daysAgo=rndi(0,58);
+      S.interactions.push({id:uid('int'),employeeId:e.id,customerName:cust,channel:pick(CHANNELS),outcome,
+        date:new Date(now-daysAgo*DAY-rndi(0,80000)*1000).toISOString(),summary:pick(TMPL[outcome])(cust)});
+    }
+  });
+  S.interactions.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const GOAL_DEFS=[['Resolve {n} support tickets','tickets'],['Log {n} customer calls','calls'],
+    ['Achieve {n} positive reviews','reviews'],['Complete {n} onboarding sessions','sessions'],
+    ['Close {n} upsell conversations','conversations']];
+  S.goals=[];
+  S.employees.forEach(e=>{
+    pickN(GOAL_DEFS,rndi(1,2)).forEach(([titleT,unit])=>{
+      const target=rndi(20,80),dueInDays=rndi(-10,30);
+      const frac=dueInDays<0?rnd(0.4,1.05):rnd(0.1,0.9);
+      S.goals.push({id:uid('goal'),employeeId:e.id,title:titleT.replace('{n}',target),target,unit,
+        current:Math.min(target,Math.round(target*frac)),
+        dueDate:new Date(now+dueInDays*DAY).toISOString().slice(0,10),
+        createdAt:new Date(now-rndi(10,45)*DAY).toISOString()});
+    });
+  });
+
+  S.attendance=[];
+  S.employees.forEach(e=>{
+    for(let d=13;d>=1;d--){
+      const day=new Date(now-d*DAY);
+      if(day.getDay()===0||day.getDay()===6)continue;
+      if(Math.random()<0.08)continue;
+      const inH=8+rnd(0,1.5),outH=16.5+rnd(0,2);
+      const inT=new Date(day);inT.setHours(Math.floor(inH),Math.round((inH%1)*60),0,0);
+      const outT=new Date(day);outT.setHours(Math.floor(outH),Math.round((outH%1)*60),0,0);
+      S.attendance.push({id:uid('att'),employeeId:e.id,type:'in',timestamp:inT.toISOString()});
+      S.attendance.push({id:uid('att'),employeeId:e.id,type:'out',timestamp:outT.toISOString()});
+    }
+    if(Math.random()<0.5){
+      const t=new Date(now);t.setHours(9,rndi(0,40),0,0);
+      if(t.getTime()<now)S.attendance.push({id:uid('att'),employeeId:e.id,type:'in',timestamp:t.toISOString()});
+    }
+  });
+  S.attendance.sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+
+  S.reports=[];
+  S.employees.forEach(e=>{
+    const allDesc=S.interactions.filter(i=>i.employeeId===e.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    if(allDesc.length<3)return;
+    const cutoff=now-27*DAY;
+    const olderSet=allDesc.filter(i=>new Date(i.date).getTime()<=cutoff);
+    if(olderSet.length>=3){
+      const stOld=analyzeEmployee(olderSet);
+      const{summary,strengths,improvements}=evalNarrative(e,stOld);
+      S.reports.push({id:uid('rep'),employeeId:e.id,generatedAt:new Date(cutoff+rndi(0,3)*DAY).toISOString(),
+        score:stOld.score,summary,strengths,improvements,basedOn:olderSet.length});
+    }
+    const stNew=analyzeEmployee(allDesc);
+    const{summary,strengths,improvements}=evalNarrative(e,stNew);
+    S.reports.push({id:uid('rep'),employeeId:e.id,generatedAt:new Date(now-rndi(0,4)*DAY).toISOString(),
+      score:stNew.score,summary,strengths,improvements,basedOn:allDesc.length});
+  });
+  S.reports.sort((a,b)=>new Date(b.generatedAt)-new Date(a.generatedAt));
+}
+
+/* ── LOCAL AI ENGINE ──
+   No external API calls. Everything below analyzes and evaluates using only
+   the live data already in S (interactions, goals, attendance, reports),
+   so answers are instant and always grounded in real records. */
+function analyzeEmployee(ints){
+  const total=ints.length;
+  const cnt=o=>ints.filter(i=>i.outcome===o).length;
+  const resolved=cnt('Resolved'),positive=cnt('Positive'),neutral=cnt('Neutral'),
+        followup=cnt('Follow-up needed'),escalated=cnt('Escalated'),negative=cnt('Negative');
+  const good=resolved+positive,bad=escalated+negative;
+  const goodRate=total?good/total:0,badRate=total?bad/total:0,followRate=total?followup/total:0;
+  const recent=ints.slice(0,Math.min(8,total));
+  const recentBad=recent.filter(i=>['Escalated','Negative'].includes(i.outcome)).length;
+  const chDist={};ints.forEach(i=>chDist[i.channel]=(chDist[i.channel]||0)+1);
+  const channels=Object.keys(chDist).length;
+  let score=5+goodRate*5-badRate*4.5;
+  if(followRate>0.3)score-=0.5;
+  if(recentBad>=3)score-=1;
+  score=Math.max(1,Math.min(10,Math.round(score)));
+  return{total,resolved,positive,neutral,followup,escalated,negative,good,bad,goodRate,badRate,followRate,recentBad,channels,score};
+}
+function evalNarrative(emp,st){
+  const pct=n=>Math.round(n*100);
+  const summary=`Based on ${st.total} logged interaction${st.total!==1?'s':''}, ${emp.name} resolved or positively closed ${pct(st.goodRate)}% of cases across ${st.channels} channel${st.channels!==1?'s':''}. ${st.bad?`${st.bad} interaction${st.bad!==1?'s were':' was'} escalated or negative (${pct(st.badRate)}%).`:'No escalations or negative outcomes were recorded.'} ${st.recentBad>=2?'Recent interactions show a pattern worth reviewing.':'Recent activity is stable relative to the overall trend.'}`;
+  const strengths=[];
+  if(st.goodRate>=0.6)strengths.push(`Strong resolution rate — ${pct(st.goodRate)}% of interactions closed positively.`);
+  if(st.channels>=3)strengths.push(`Comfortable across ${st.channels} different contact channels.`);
+  if(st.escalated===0&&st.total>=3)strengths.push('Zero escalations across all logged interactions.');
+  if(st.total>=15)strengths.push(`High interaction volume (${st.total} logged) shows strong engagement.`);
+  if(!strengths.length)strengths.push('Consistent interaction logging provides a clear performance record.');
+  const improvements=[];
+  if(st.badRate>0.15)improvements.push(`Reduce escalated/negative outcomes — currently ${pct(st.badRate)}% of interactions.`);
+  if(st.followRate>0.25)improvements.push('High rate of follow-up-needed cases suggests first-contact resolution could improve.');
+  if(st.recentBad>=2)improvements.push('Recent interactions trending negative — worth a coaching check-in.');
+  if(st.channels<=1&&st.total>=5)improvements.push('Limited channel variety — cross-training on other channels could help.');
+  if(!improvements.length)improvements.push('No major concerns identified from current data — maintain consistency.');
+  return{summary,strengths:strengths.slice(0,4),improvements:improvements.slice(0,4)};
+}
+async function runEval(eid){
+  const emp=S.employees.find(e=>e.id===eid);if(!emp)return;
+  const ints=S.interactions.filter(i=>i.employeeId===eid);
+  if(!ints.length){showToast(t('toastNoInteractionsEval'),1);return;}
+  S.busyId=eid;render();
+  setTimeout(async()=>{
+    const st=analyzeEmployee(ints);
+    const{summary,strengths,improvements}=evalNarrative(emp,st);
+    const rep={id:uid('rep'),employeeId:eid,generatedAt:new Date().toISOString(),
+      score:st.score,summary,strengths,improvements,basedOn:ints.length};
+    S.reports=[rep,...S.reports];await saveL(KEYS.rep,S.reports);
+    S.busyId=null;showToast(t('toastEvalComplete')+' '+emp.name+'.');render();
+  },400);
+}
+function aiChatAnswer(question){
+  const q=question.toLowerCase();
+  const ae=S.employees.filter(e=>e.status==='active');
+  const data=ae.map(e=>{
+    const ints=S.interactions.filter(i=>i.employeeId===e.id);
+    const st=analyzeEmployee(ints);
+    const reps=S.reports.filter(r=>r.employeeId===e.id);
+    const lastScore=reps.length?reps[0].score:st.score;
+    return{e,ints,st,lastScore};
+  });
+  if(!data.length)return"You don't have any active teammates yet — add some to start seeing insights.";
+  if(/coach|struggl|help|worst|underperform/.test(q)){
+    const w=[...data].sort((a,b)=>a.lastScore-b.lastScore||b.st.badRate-a.st.badRate)[0];
+    return`${w.e.name} could use coaching — latest score ${w.lastScore}/10, with ${w.st.escalated} escalated and ${w.st.negative} negative outcome${w.st.escalated+w.st.negative!==1?'s':''} out of ${w.st.total} logged interactions (${Math.round(w.st.badRate*100)}% negative rate).`;
+  }
+  if(/best|top|highest|great/.test(q)){
+    const t=[...data].sort((a,b)=>b.lastScore-a.lastScore||b.st.goodRate-a.st.goodRate)[0];
+    return`${t.e.name} has the best outcomes — latest score ${t.lastScore}/10, resolving or positively closing ${Math.round(t.st.goodRate*100)}% of ${t.st.total} interactions.`;
+  }
+  if(/goal|risk|overdue|target/.test(q)){
+    const overdue=S.goals.filter(g=>new Date(g.dueDate)<new Date()&&g.current<g.target);
+    const behind=S.goals.filter(g=>{const daysLeft=(new Date(g.dueDate)-Date.now())/DAY;const p=g.current/g.target;return daysLeft>0&&daysLeft<7&&p<0.7;});
+    if(!overdue.length&&!behind.length)return'No goals are overdue or at risk right now — the team is tracking well against targets.';
+    const parts=[];
+    if(overdue.length)parts.push(`${overdue.length} overdue: ${overdue.map(g=>{const e=S.employees.find(x=>x.id===g.employeeId);return`${e?.name} (${g.current}/${g.target} ${g.unit})`;}).join(', ')}`);
+    if(behind.length)parts.push(`${behind.length} due within a week and behind pace: ${behind.map(g=>{const e=S.employees.find(x=>x.id===g.employeeId);return e?.name;}).join(', ')}`);
+    return parts.join('. ')+'.';
+  }
+  if(/summar|overview|how.*team|performance/.test(q)){
+    const avgScore=(data.reduce((a,d)=>a+d.lastScore,0)/data.length).toFixed(1);
+    const badTotal=data.reduce((a,d)=>a+d.st.bad,0);
+    return`Team snapshot: ${data.length} active teammates, ${S.interactions.length} total interactions logged, average AI score ${avgScore}/10. ${badTotal} escalated/negative interactions across the team. ${getAlerts().length} active alert${getAlerts().length!==1?'s':''} on the dashboard right now.`;
+  }
+  if(/attend|clock|who.*in\b/.test(q)){
+    const inNow=data.filter(d=>isClockedIn(d.e.id));
+    return inNow.length?`Currently clocked in: ${inNow.map(d=>d.e.name).join(', ')}.`:'No one is currently clocked in.';
+  }
+  if(/escalat/.test(q)){
+    const withEsc=data.filter(d=>d.st.escalated>0).sort((a,b)=>b.st.escalated-a.st.escalated);
+    if(!withEsc.length)return'No escalations logged across the team.';
+    return`Escalations by teammate: ${withEsc.map(d=>`${d.e.name} (${d.st.escalated})`).join(', ')}.`;
+  }
+  const avgScore=(data.reduce((a,d)=>a+d.lastScore,0)/data.length).toFixed(1);
+  return`I can see ${data.length} active teammates and ${S.interactions.length} logged interactions, averaging ${avgScore}/10. Try asking about coaching needs, top performers, goals at risk, attendance, or escalations for a more specific answer.`;
+}
+async function sendChat(preset){
+  const inp=document.getElementById('chat-in');
+  const txt=preset!==undefined?preset:(inp?inp.value.trim():'');
+  if(!txt)return;
+  S.aiChat.push({r:'u',t:txt});S.aiBusy=true;render();scrollChat();
+  if(inp)inp.value='';
+  setTimeout(()=>{
+    S.aiChat.push({r:'a',t:aiChatAnswer(txt)});
+    S.aiBusy=false;render();scrollChat();
+  },350);
+}
+function scrollChat(){requestAnimationFrame(()=>{const l=document.getElementById('chat-log');if(l)l.scrollTop=l.scrollHeight;});}
+
+/* ── TOAST ── */
+function showToast(msg,isErr){
+  S.toast={msg,isErr};render();
+  clearTimeout(window._tt);window._tt=setTimeout(()=>{S.toast=null;render();},3500);
+}
+
+/* ── CLOCK ── */
+function updateClock(){
+  const el=document.getElementById('live-clock');
+  if(el)el.textContent=new Date().toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000);
+
+/* ── AUTH ── */
+function loginMgr(){S.session={role:'manager'};S.route='dashboard';render();}
+function loginEmp(){
+  const sel=document.getElementById('emp-sel');
+  if(!sel||!sel.value){showToast(t('toastChooseYourName'),1);return;}
+  S.session={role:'employee',id:sel.value};S.route='profile';render();
+}
+function logout(){S.session=null;S.aiChat=[];render();}
+function navTo(r){S.route=r;render();}
+
+/* ── EMPLOYEE CRUD ── */
+function openEmpModal(eid){
+  const e=eid?S.employees.find(x=>x.id===eid):null;
+  document.getElementById('modal-root').innerHTML=`
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>${e?t('editTeammate'):t('addTeammateTitle')}</h3>
+    <form onsubmit="submitEmp(event,${eid?`'${eid}'`:'null'})">
+      <div class="field full"><label>${t('fullName')}</label><input class="inp" name="name" required value="${esc(e?.name||'')}" placeholder="Alex Johnson"></div>
+      <div class="form-grid">
+        <div class="field"><label>${t('email')}</label><input class="inp" name="email" type="email" required value="${esc(e?.email||'')}" placeholder="alex@company.com"></div>
+        <div class="field"><label>${t('colTitle')}</label><input class="inp" name="role" required value="${esc(e?.role||'')}" placeholder="Support Lead"></div>
+        <div class="field"><label>${t('colDepartment')}</label><input class="inp" name="dept" required value="${esc(e?.department||'')}" placeholder="Customer Success"></div>
+        <div class="field"><label>${t('hireDate')}</label><input class="inp" name="hireDate" type="date" required value="${e?.hireDate?e.hireDate.slice(0,10):''}"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
+        <button type="submit" class="btn btn-teal">${e?t('saveChanges'):t('addTeammate').replace('+ ','')}</button>
+      </div>
+    </form>
+  </div></div>`;}
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+async function submitEmp(ev,eid){
+  ev.preventDefault();const f=ev.target;
+  const d={name:f.name.value.trim(),email:f.email.value.trim(),role:f.role.value.trim(),department:f.dept.value.trim(),hireDate:f.hireDate.value};
+  if(eid)Object.assign(S.employees.find(e=>e.id===eid),d);
+  else S.employees.push({id:uid('emp'),status:'active',...d});
+  await saveL(KEYS.emp,S.employees);closeModal();showToast(eid?t('toastTeammateUpdated'):t('toastTeammateAdded'));render();
+}
+async function toggleStatus(id){
+  const e=S.employees.find(x=>x.id===id);if(!e)return;
+  e.status=e.status==='active'?'inactive':'active';
+  await saveL(KEYS.emp,S.employees);render();
+}
+
+/* ── INTERACTIONS ── */
+async function submitInt(ev){
+  ev.preventDefault();const f=ev.target;
+  const e={id:uid('int'),employeeId:S.session.id,customerName:f.cn.value.trim(),channel:f.ch.value,
+    outcome:f.oc.value,date:new Date().toISOString(),summary:f.sum.value.trim()};
+  S.interactions=[e,...S.interactions];
+  await saveL(KEYS.int,S.interactions);f.reset();showToast(t('toastInteractionLogged'));S.route='history';render();
+}
+function setF(k,v){S.filters[k]=v;render();}
+function filteredInts(){
+  return S.interactions.filter(i=>{
+    if(S.filters.eid&&i.employeeId!==S.filters.eid)return false;
+    if(S.filters.outcome&&i.outcome!==S.filters.outcome)return false;
+    if(S.filters.text){const t=S.filters.text.toLowerCase();const e=S.employees.find(x=>x.id===i.employeeId);
+      if(!(i.customerName.toLowerCase().includes(t)||i.summary.toLowerCase().includes(t)||(e&&e.name.toLowerCase().includes(t))))return false;}
+    return true;});
+}
+function exportCSV(){
+  const rows=[['Employee','Customer','Channel','Outcome','Summary','Date']];
+  filteredInts().forEach(i=>{const e=S.employees.find(x=>x.id===i.employeeId);
+    rows.push([e?e.name:'Unknown',i.customerName,i.channel,i.outcome,i.summary.replace(/\n/g,' '),fmtD(i.date)]);});
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:'interactions.csv'});
+  document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);},200);
+}
+
+/* ── GOALS ── */
+function openGoalModal(){
+  const ae=S.employees.filter(e=>e.status==='active');
+  document.getElementById('modal-root').innerHTML=`
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>${t('setGoalTitle')}</h3>
+    <form onsubmit="submitGoal(event)">
+      <div class="field full"><label>${t('teammate')}</label>
+        <select class="inp" name="eid" required>${ae.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')}</select></div>
+      <div class="field full"><label>${t('goalTitleLbl')}</label><input class="inp" name="title" required placeholder="${t('goalTitlePh')}"></div>
+      <div class="form-grid">
+        <div class="field"><label>${t('target')}</label><input class="inp" name="target" type="number" min="1" required placeholder="50"></div>
+        <div class="field"><label>${t('unit')}</label><input class="inp" name="unit" required placeholder="${t('unitPh')}"></div>
+        <div class="field full"><label>${t('dueDate')}</label><input class="inp" name="due" type="date" required></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
+        <button type="submit" class="btn btn-teal">${t('setGoal').replace('+ ','')}</button>
+      </div>
+    </form>
+  </div></div>`;}
+async function submitGoal(ev){
+  ev.preventDefault();const f=ev.target;
+  S.goals.push({id:uid('goal'),employeeId:f.eid.value,title:f.title.value.trim(),target:Number(f.target.value),unit:f.unit.value.trim(),current:0,dueDate:f.due.value,createdAt:new Date().toISOString()});
+  await saveL(KEYS.goal,S.goals);closeModal();showToast(t('toastGoalSet'));render();
+}
+async function updateGoal(gid,btn){
+  const v=Number(btn.closest('.goal-upd').querySelector('input').value);
+  if(isNaN(v)||v<0)return;
+  const g=S.goals.find(x=>x.id===gid);if(!g)return;
+  g.current=v;await saveL(KEYS.goal,S.goals);showToast(t('toastProgressUpdated'));render();
+}
+async function delGoal(gid){S.goals=S.goals.filter(g=>g.id!==gid);await saveL(KEYS.goal,S.goals);render();}
+
+/* ── ATTENDANCE ── */
+function lastAtt(eid){const l=S.attendance.filter(a=>a.employeeId===eid);return l[l.length-1];}
+function isClockedIn(eid){const l=lastAtt(eid);return!!(l&&l.type==='in');}
+function todayHrs(eid){
+  const td=new Date().toDateString();
+  const evs=S.attendance.filter(a=>a.employeeId===eid&&new Date(a.timestamp).toDateString()===td);
+  let total=0,open=null;
+  evs.forEach(e=>{if(e.type==='in')open=new Date(e.timestamp);else if(e.type==='out'&&open){total+=new Date(e.timestamp)-open;open=null;}});
+  if(open)total+=Date.now()-open;
+  return(total/3600000).toFixed(1);
+}
+async function clockToggle(){
+  const eid=S.session.id,ci=isClockedIn(eid);
+  S.attendance.push({id:uid('att'),employeeId:eid,type:ci?'out':'in',timestamp:new Date().toISOString()});
+  await saveL(KEYS.att,S.attendance);showToast(ci?t('toastClockedOut'):t('toastClockedIn'));render();
+}
+
+/* ── ALERTS ── */
+function getAlerts(){
+  const al=[];
+  S.employees.filter(e=>e.status==='active').forEach(e=>{
+    const ints=S.interactions.filter(i=>i.employeeId===e.id);
+    const last3=ints.slice(0,3);
+    if(last3.length===3&&last3.every(i=>['Escalated','Negative'].includes(i.outcome)))
+      al.push(`<b>${esc(e.name)}</b> — 3 negative/escalated interactions in a row.`);
+    const reps=S.reports.filter(r=>r.employeeId===e.id);
+    if(!reps.length&&ints.length>=3)al.push(`<b>${esc(e.name)}</b> — ${ints.length} interactions logged, no AI evaluation yet.`);
+    else if(reps.length&&(Date.now()-new Date(reps[0].generatedAt).getTime())>45*DAY)
+      al.push(`<b>${esc(e.name)}</b> — last evaluation was over 45 days ago.`);
+    if(reps.length>=2&&reps[0].score<=reps[1].score-2)
+      al.push(`<b>${esc(e.name)}</b> — AI score dropped from ${reps[1].score} to ${reps[0].score}.`);
+    const od=S.goals.filter(g=>g.employeeId===e.id&&new Date(g.dueDate)<new Date()&&g.current<g.target);
+    if(od.length)al.push(`<b>${esc(e.name)}</b> — ${od.length} overdue goal${od.length>1?'s':''}.`);
+  });
+  return al.slice(0,5);
+}
+
+/* ── RENDER HELPERS ── */
+function obadge(o){
+  const m={Resolved:'b-teal',Positive:'b-green','Follow-up needed':'b-amber',Escalated:'b-red',Negative:'b-red',Neutral:'b-gray'};
+  return`<span class="badge ${m[o]||'b-gray'}">${esc(oLabel(o))}</span>`;
+}
+function avHtml(n,id,sz='30'){return`<span class="av av-${sz}" style="background:${avc(id)}">${esc(ini(n))}</span>`;}
+function gaugeHtml(score,sz=80){
+  const r=(sz/2)-8,circ=2*Math.PI*r;
+  const pct=score/10,dash=pct*circ,gap=circ-dash;
+  const color=score>=8?'var(--teal)':score>=5?'var(--amber)':'var(--red)';
+  return`<div class="gauge" style="width:${sz}px;height:${sz}px">
+    <svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">
+      <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="var(--border2)" stroke-width="6"/>
+      <circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-dasharray="${dash} ${gap}" stroke-linecap="round"/>
+    </svg>
+    <div class="gv"><span class="gn" style="font-size:${sz>60?18:13}px;color:${color}">${score}</span><span class="gs">/10</span></div>
+  </div>`;}
+function statCard(icon,val,lbl,accent,dim,trend=''){
+  return`<div class="sc" style="--sc-accent:${accent};--sc-dim:${dim}">
+    <div class="sc-icon">${icon}</div>
+    <div class="sc-val">${val}</div>
+    <div class="sc-lbl">${lbl}</div>
+    ${trend?`<div class="sc-trend ${trend.startsWith('+')?'up':'dn'}">${trend}</div>`:''}
+  </div>`;}
+function statRow(){
+  const active=S.employees.filter(e=>e.status==='active').length;
+  const total=S.interactions.length;
+  const l30=S.interactions.filter(i=>Date.now()-new Date(i.date).getTime()<30*DAY).length;
+  const scores=S.reports.map(r=>r.score);
+  const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';
+  return`<div class="stat-row">
+    ${statCard('👥',active,t('activeTeammates'),'var(--teal)','var(--teal-dim)')}
+    ${statCard('💬',total,t('totalInteractions'),'var(--violet)','var(--violet-dim)')}
+    ${statCard('📅',l30,t('last30'),'var(--amber)','var(--amber-dim)')}
+    ${statCard('◈',avg,t('avgAiScore'),'var(--violet)','var(--violet-dim)')}
+  </div>`;}
+function reportCardHtml(r,showName){
+  const e=S.employees.find(x=>x.id===r.employeeId);
+  return`<div class="report-card">
+    <div class="report-top">
+      ${gaugeHtml(r.score,72)}
+      <div class="report-info">
+        ${showName?`<div class="report-name">${esc(e?.name||t('formerTeammate'))}</div>`:''}
+        <div class="report-meta">${fmtD(r.generatedAt)} · ${t('basedOn')} ${r.basedOn} ${t('interactionWord')}${r.basedOn!==1&&S.lang==='en'?'s':''}</div>
+        <div style="margin-top:8px;"><span class="ai-tag">${t('aiGenerated')}</span></div>
+      </div>
+    </div>
+    <div class="report-summary">${esc(r.summary)}</div>
+    <div class="report-cols">
+      <div class="report-col rc-s"><h5>${t('strengths')}</h5><ul>${r.strengths.map(s=>`<li>${esc(s)}</li>`).join('')||'<li>—</li>'}</ul></div>
+      <div class="report-col rc-i"><h5>${t('areasToDevelop')}</h5><ul>${r.improvements.map(s=>`<li>${esc(s)}</li>`).join('')||'<li>—</li>'}</ul></div>
+    </div>
+  </div>`;}
+function goalCardHtml(g,showName){
+  const e=S.employees.find(x=>x.id===g.employeeId);
+  const pct=Math.min(100,Math.round((g.current/g.target)*100));
+  const over=new Date(g.dueDate)<new Date()&&g.current<g.target;
+  const fc=pct>=100?'var(--teal)':over?'var(--red)':'var(--violet)';
+  return`<div class="goal-card">
+    <div class="goal-header">
+      <div class="goal-title">${showName?`<span style="color:var(--t2);font-weight:500">${esc(e?.name||'?')} · </span>`:''}${esc(g.title)}</div>
+      <div class="goal-nums">${g.current} / ${g.target} ${esc(g.unit)}</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${fc}"></div></div>
+    <div class="goal-foot">
+      <span>${over?`<span style="color:var(--red);font-weight:600">${t('overdue')}</span>`:`${t('due')} ${fmtD(g.dueDate)}`} · ${pct}% ${t('complete')}</span>
+      <div class="goal-upd">
+        <input type="number" min="0" value="${g.current}">
+        <button class="btn btn-ghost btn-sm" onclick="updateGoal('${g.id}',this)">${t('update')}</button>
+        ${showName?`<button class="btn btn-ghost btn-sm" onclick="delGoal('${g.id}')">✕</button>`:''}
+      </div>
+    </div>
+  </div>`;}
+
+/* ── CHARTS ── */
+function destroyCharts(){Object.values(S.charts).forEach(c=>c&&c.destroy());S.charts={};}
+function initCharts(){
+  if(typeof Chart==='undefined')return;
+  destroyCharts();
+  const vc=document.getElementById('ch-vol'),oc=document.getElementById('ch-out');
+  if(!vc||!oc)return;
+  const weeks=[],counts=[];
+  for(let i=7;i>=0;i--){
+    const st=Date.now()-i*7*DAY,en=st+7*DAY;
+    weeks.push(new Date(st).toLocaleDateString(locale(),{month:'short',day:'numeric'}));
+    counts.push(S.interactions.filter(x=>{const t=new Date(x.date).getTime();return t>=st&&t<en;}).length);
+  }
+  const tc='rgba(255,255,255,.1)',lc='rgba(255,255,255,.5)';
+  S.charts.vol=new Chart(vc,{type:'bar',data:{labels:weeks,datasets:[{label:'Interactions',data:counts,backgroundColor:'rgba(0,201,167,.35)',borderColor:'var(--teal)',borderWidth:1.5,borderRadius:6,maxBarThickness:28}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:lc,font:{size:11}}},y:{beginAtZero:true,ticks:{precision:0,color:lc,font:{size:11}},grid:{color:tc}}}}});
+  const oo=['Resolved','Positive','Neutral','Follow-up needed','Escalated','Negative'];
+  const oclr=['#00C9A7','#22C55E','#4A6177','#F0A500','#F05C5C','#B91C1C'];
+  S.charts.out=new Chart(oc,{type:'doughnut',data:{labels:oo.map(oLabel),datasets:[{data:oo.map(o=>S.interactions.filter(i=>i.outcome===o).length),backgroundColor:oclr.map(c=>c+'BB'),borderColor:oclr,borderWidth:1.5}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:lc,boxWidth:10,font:{size:11},padding:14}}}}});
+}
+
+/* ── MANAGER VIEWS ── */
+function vDashboard(){
+  const al=getAlerts();
+  return`${statRow()}
+  ${al.length?`<div class="alerts-box">${al.map(a=>`<div class="alert-item"><div class="alert-dot"></div><div class="alert-text">${a}</div></div>`).join('')}</div>`:''}
+  <div class="chart-grid">
+    <div class="card"><div class="card-head"><h3>${t('interactionVolume')}</h3><span style="font-size:11px;color:var(--t3)">${t('last8weeks')}</span></div><div class="chart-box"><canvas id="ch-vol"></canvas></div></div>
+    <div class="card"><div class="card-head"><h3>${t('outcomeBreakdown')}</h3></div><div class="chart-box"><canvas id="ch-out"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>${t('recentInteractions')}</h3><button class="btn btn-ghost btn-sm" onclick="navTo('interactions')">${t('viewAll')}</button></div>
+    ${S.interactions.length?`<table><thead><tr><th>${t('colTeammate')}</th><th>${t('colCustomer')}</th><th>${t('colChannel')}</th><th>${t('colOutcome')}</th><th>${t('colDate')}</th></tr></thead><tbody>
+    ${S.interactions.slice(0,6).map(i=>{const e=S.employees.find(x=>x.id===i.employeeId);return`<tr>
+      <td><div class="row-name">${avHtml(e?.name||'?',i.employeeId)}<strong>${esc(e?.name||t('formerTeammate'))}</strong></div></td>
+      <td>${esc(i.customerName)}</td><td>${esc(oLabel(i.channel))}</td><td>${obadge(i.outcome)}</td><td>${fmtD(i.date)}</td></tr>`;}).join('')}
+    </tbody></table>`:`<div class="empty"><span class="eic">💬</span><div class="etitle">${t('noInteractionsYet')}</div><p>${t('noInteractionsBody')}</p></div>`}
+  </div>`;
+}
+function vTeam(){
+  return`<div class="card">
+    <div class="card-head"><h3>${t('teamRoster')}</h3><button class="btn btn-teal btn-sm" onclick="openEmpModal()">${t('addTeammate')}</button></div>
+    ${S.employees.length?`<table><thead><tr><th>${t('colTeammate')}</th><th>${t('colTitle')}</th><th>${t('colDepartment')}</th><th>${t('colHired')}</th><th>${t('colStatus')}</th><th></th></tr></thead><tbody>
+    ${S.employees.map(e=>`<tr>
+      <td><div class="row-name">${avHtml(e.name,e.id)}<div><strong>${esc(e.name)}</strong><div class="row-sub">${esc(e.email)}</div></div></div></td>
+      <td>${esc(e.role)}</td><td>${esc(e.department)}</td><td>${fmtD(e.hireDate)}</td>
+      <td><span class="badge ${e.status==='active'?'b-teal':'b-gray'}">${e.status==='active'?t('active'):t('inactive')}</span></td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="openEmpModal('${e.id}')">${t('edit')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleStatus('${e.id}')">${e.status==='active'?t('deactivate'):t('reactivate')}</button>
+      </td></tr>`).join('')}
+    </tbody></table>`:`<div class="empty"><span class="eic">👥</span><div class="etitle">${t('noTeammatesYet')}</div><p>${t('noTeammatesBody')}</p></div>`}
+  </div>`;}
+function vInteractions(){
+  const list=filteredInts();
+  const ocs=['Resolved','Follow-up needed','Escalated','Positive','Neutral','Negative'];
+  return`<div class="card">
+    <div class="card-head">
+      <h3>${t('allInteractions')} <span style="font-size:12px;color:var(--t3);font-weight:400">${list.length} ${t('shown')}</span></h3>
+      <div class="toolbar">
+        <input class="inp" type="text" placeholder="${t('searchPlaceholder')}" value="${esc(S.filters.text)}" oninput="setF('text',this.value)" style="width:180px">
+        <select onchange="setF('eid',this.value)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--t1);font-size:12.5px">
+          <option value="">${t('allTeammates')}</option>
+          ${S.employees.map(e=>`<option value="${e.id}"${S.filters.eid===e.id?' selected':''}>${esc(e.name)}</option>`).join('')}
+        </select>
+        <select onchange="setF('outcome',this.value)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--t1);font-size:12.5px">
+          <option value="">${t('allOutcomes')}</option>${ocs.map(o=>`<option value="${o}"${S.filters.outcome===o?' selected':''}>${oLabel(o)}</option>`).join('')}
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">${t('csvExport')}</button>
+      </div>
+    </div>
+    ${list.length?`<table><thead><tr><th>${t('colTeammate')}</th><th>${t('colCustomer')}</th><th>${t('colChannel')}</th><th>${t('colOutcome')}</th><th>${t('colSummary')}</th><th>${t('colDate')}</th></tr></thead><tbody>
+    ${list.map(i=>{const e=S.employees.find(x=>x.id===i.employeeId);return`<tr>
+      <td><div class="row-name">${avHtml(e?.name||'?',i.employeeId)}<strong>${esc(e?.name||t('former'))}</strong></div></td>
+      <td>${esc(i.customerName)}</td><td>${esc(oLabel(i.channel))}</td><td>${obadge(i.outcome)}</td>
+      <td style="max-width:240px;color:var(--t2)">${esc(i.summary)}</td><td>${fmtD(i.date)}</td></tr>`;}).join('')}
+    </tbody></table>`:`<div class="empty"><span class="eic">🔍</span><div class="etitle">${t('noResults')}</div><p>${t('noResultsBody')}</p></div>`}
+  </div>`;}
+function vPerformance(){
+  const ae=S.employees.filter(e=>e.status==='active');
+  return`<div class="card">
+    <div class="card-head"><div class="card-head-left"><h3>${t('runEvaluation')}</h3><span class="ai-tag">${t('aiPowered')}</span></div></div>
+    ${ae.length?`<table><thead><tr><th>${t('colTeammate')}</th><th>${t('colInteractions')}</th><th>${t('colLastEvaluated')}</th><th></th></tr></thead><tbody>
+    ${ae.map(e=>{const c=S.interactions.filter(i=>i.employeeId===e.id).length;const lr=S.reports.find(r=>r.employeeId===e.id);const busy=S.busyId===e.id;
+    return`<tr><td><div class="row-name">${avHtml(e.name,e.id)}<strong>${esc(e.name)}</strong></div></td>
+      <td>${c}</td><td>${lr?fmtD(lr.generatedAt):'—'}</td>
+      <td style="text-align:right"><button class="btn btn-violet btn-sm" ${busy?'disabled':''} onclick="runEval('${e.id}')">
+        ${busy?`<span class="spin"></span> ${t('evaluating')}`:t('runAiEvaluation')}</button></td></tr>`;}).join('')}
+    </tbody></table>`:`<div class="empty-row">${t('addTeammatesFirst')}</div>`}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>${t('evaluationHistory')}</h3></div>
+    ${S.reports.length?S.reports.map(r=>reportCardHtml(r,true)).join(''):`<div class="empty"><span class="eic">◈</span><div class="etitle">${t('noEvaluationsYet')}</div><p>${t('noEvaluationsBody')}</p></div>`}
+  </div>`;}
+function vGoals(){
+  return`<div class="card">
+    <div class="card-head"><h3>${t('goalsKpis')}</h3><button class="btn btn-teal btn-sm" onclick="openGoalModal()">${t('setGoal')}</button></div>
+    ${S.goals.length?S.goals.map(g=>goalCardHtml(g,true)).join(''):`<div class="empty"><span class="eic">🎯</span><div class="etitle">${t('noGoalsSet')}</div><p>${t('noGoalsBody')}</p></div>`}
+  </div>`;}
+function vAttendance(){
+  const ae=S.employees.filter(e=>e.status==='active');
+  return`<div class="card">
+    <div class="card-head"><h3>${t('teamAttendanceToday')}</h3></div>
+    ${ae.length?`<table><thead><tr><th>${t('colTeammate')}</th><th>${t('colStatus')}</th><th>${t('lastAction')}</th><th>${t('hoursToday')}</th></tr></thead><tbody>
+    ${ae.map(e=>{const ci=isClockedIn(e.id);const la=lastAtt(e.id);return`<tr>
+      <td><div class="row-name">${avHtml(e.name,e.id)}<strong>${esc(e.name)}</strong></div></td>
+      <td><span class="att-pill ${ci?'att-in':'att-out'}"><span class="ap-dot"></span>${ci?t('clockedIn'):t('clockedOut')}</span></td>
+      <td>${la?fmtT(la.timestamp)+' · '+fmtD(la.timestamp):'—'}</td>
+      <td><span style="font-family:var(--fm)">${todayHrs(e.id)}</span> ${t('hrs')}</td></tr>`;}).join('')}
+    </tbody></table>`:`<div class="empty-row">${t('addTeammatesAttendance')}</div>`}
+  </div>`;}
+function vAssistant(){
+  const CHIPS=[t('chip1'),t('chip2'),t('chip3'),t('chip4')];
+  return`<div class="card">
+    <div class="card-head"><div class="card-head-left"><h3>${t('aiTeamAssistant')}</h3><span class="ai-tag">${t('liveTeamData')}</span></div></div>
+    <div class="chat-wrap">
+      <div class="chat-log" id="chat-log">
+        ${!S.aiChat.length?`<div class="empty" style="padding-top:50px"><span class="eic">◈</span><div class="etitle">${t('askMeAboutTeam')}</div><p>${t('askMeBody')}</p></div>`:''}
+        ${S.aiChat.map(m=>m.r==='u'
+          ?`<div class="chat-bubble u">${esc(m.t)}</div>`
+          :`<div class="chat-bubble a"><div class="ai-sender">${t('nexusAi')}</div>${esc(m.t)}</div>`).join('')}
+        ${S.aiBusy?`<div class="chat-bubble a"><div class="ai-sender">${t('nexusAi')}</div><div class="typing"><span></span><span></span><span></span></div></div>`:''}
+      </div>
+      ${!S.aiChat.length?`<div class="chips">${CHIPS.map(c=>`<button class="chip" onclick='sendChat(${JSON.stringify(c)})'>${esc(c)}</button>`).join('')}</div>`:''}
+      <div class="chat-input-row">
+        <input class="inp" id="chat-in" type="text" placeholder="${t('askAboutTeamPh')}" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-violet" ${S.aiBusy?'disabled':''} onclick="sendChat()">${t('send')}</button>
+      </div>
+    </div>
+  </div>`;}
+
+/* ── EMPLOYEE VIEWS ── */
+function vProfile(){
+  const e=S.employees.find(x=>x.id===S.session.id);if(!e)return`<div class="empty"><div class="etitle">${t('profileNotFound')}</div></div>`;
+  const mi=S.interactions.filter(i=>i.employeeId===e.id);
+  const mr=S.reports.filter(r=>r.employeeId===e.id);
+  const ci=isClockedIn(e.id);
+  return`<div class="profile-hero">
+    ${avHtml(e.name,e.id,'54')}
+    <div style="flex:1">
+      <h2 style="font-size:22px;letter-spacing:-.02em">${esc(e.name)}</h2>
+      <div style="color:var(--t2);font-size:13px;margin-top:4px">${esc(e.role)} · ${esc(e.department)}</div>
+      <div style="color:var(--t3);font-size:12px;margin-top:3px">${esc(e.email)} · ${t('joined')} ${fmtD(e.hireDate)}</div>
+      <div style="margin-top:12px"><span class="att-pill ${ci?'att-in':'att-out'}"><span class="ap-dot"></span>${ci?t('currentlyClockedIn'):t('currentlyClockedOut')}</span></div>
+    </div>
+    ${mr.length?`<div style="text-align:center">${gaugeHtml(mr[0].score,80)}<div style="font-size:11px;color:var(--t3);margin-top:6px">${t('latestScore')}</div></div>`:''}
+  </div>
+  <div class="stat-row" style="grid-template-columns:1fr 1fr">
+    ${statCard('💬',mi.length,t('interactionsLogged'),'var(--teal)','var(--teal-dim)')}
+    ${statCard('◈',mr.length?mr[0].score+'/10':'—',t('latestAiScore'),'var(--violet)','var(--violet-dim)')}
+  </div>
+  ${mr.length?`<div class="card"><div class="card-head"><h3>${t('latestPerfFeedback')}</h3><span class="ai-tag">${t('aiGenerated')}</span></div>${reportCardHtml(mr[0],false)}</div>`:''}`;
+}
+function vLog(){
+  return`<div class="card">
+    <div class="card-head"><h3>${t('logCustomerInteraction')}</h3></div>
+    <form onsubmit="submitInt(event)">
+      <div class="form-grid">
+        <div class="field"><label>${t('customerName')}</label><input class="inp" name="cn" required placeholder="${t('customerNamePh')}"></div>
+        <div class="field"><label>${t('channel')}</label><select class="inp" name="ch" required>
+          <option value="Phone">${oLabel('Phone')}</option><option value="Email">${oLabel('Email')}</option><option value="Live chat">${oLabel('Live chat')}</option><option value="In person">${oLabel('In person')}</option><option value="Social media">${oLabel('Social media')}</option></select></div>
+        <div class="field full"><label>${t('outcome')}</label><select class="inp" name="oc" required>
+          <option value="Resolved">${oLabel('Resolved')}</option><option value="Follow-up needed">${oLabel('Follow-up needed')}</option><option value="Escalated">${oLabel('Escalated')}</option><option value="Positive">${oLabel('Positive')}</option><option value="Neutral">${oLabel('Neutral')}</option><option value="Negative">${oLabel('Negative')}</option></select></div>
+        <div class="field full"><label>${t('whatHappened')}</label><textarea class="inp" name="sum" required placeholder="${t('whatHappenedPh')}"></textarea></div>
+      </div>
+      <button type="submit" class="btn btn-teal">${t('logInteraction')}</button>
+    </form>
+  </div>`;}
+function vHistory(){
+  const mine=S.interactions.filter(i=>i.employeeId===S.session.id);
+  return`<div class="card">
+    <div class="card-head"><h3>${t('myInteractions')}</h3></div>
+    ${mine.length?`<table><thead><tr><th>${t('colCustomer')}</th><th>${t('colChannel')}</th><th>${t('colOutcome')}</th><th>${t('colSummary')}</th><th>${t('colDate')}</th></tr></thead><tbody>
+    ${mine.map(i=>`<tr><td><strong>${esc(i.customerName)}</strong></td><td>${esc(oLabel(i.channel))}</td><td>${obadge(i.outcome)}</td>
+      <td style="max-width:260px">${esc(i.summary)}</td><td>${fmtD(i.date)}</td></tr>`).join('')}
+    </tbody></table>`:`<div class="empty"><span class="eic">💬</span><div class="etitle">${t('nothingLoggedYet')}</div><p>${t('nothingLoggedBody')}</p></div>`}
+  </div>`;}
+function vMyPerf(){
+  const mine=S.reports.filter(r=>r.employeeId===S.session.id);
+  return`<div class="card">
+    <div class="card-head"><div class="card-head-left"><h3>${t('myPerfEvals')}</h3><span class="ai-tag">${t('aiGenerated')}</span></div></div>
+    ${mine.length?mine.map(r=>reportCardHtml(r,false)).join(''):`<div class="empty"><span class="eic">◈</span><div class="etitle">${t('noEvalsYetEmp')}</div><p>${t('noEvalsYetEmpBody')}</p></div>`}
+  </div>`;}
+function vMyGoals(){
+  const mine=S.goals.filter(g=>g.employeeId===S.session.id);
+  return`<div class="card">
+    <div class="card-head"><h3>${t('myGoals')}</h3></div>
+    ${mine.length?mine.map(g=>goalCardHtml(g,false)).join(''):`<div class="empty"><span class="eic">🎯</span><div class="etitle">${t('noGoalsAssigned')}</div><p>${t('noGoalsAssignedBody')}</p></div>`}
+  </div>`;}
+function vClock(){
+  const eid=S.session.id,ci=isClockedIn(eid),la=lastAtt(eid);
+  const hrs=todayHrs(eid);
+  const today=S.attendance.filter(a=>a.employeeId===eid&&new Date(a.timestamp).toDateString()===new Date().toDateString());
+  return`<div class="card">
+    <div class="clock-hero">
+      <div style="margin-bottom:16px"><span class="att-pill ${ci?'att-in':'att-out'}"><span class="ap-dot"></span>${ci?t('currentlyClockedIn'):t('currentlyClockedOut')}</span></div>
+      <div class="clock-time">${hrs}</div>
+      <div class="clock-date">${t('hoursLoggedToday')}${la?' · '+t('lastActionLbl')+' '+fmtT(la.timestamp):''}</div>
+      <button class="clock-ring ${ci?'in':'out'}" onclick="clockToggle()">
+        <div class="cr-track"></div>
+        <div class="cr-fill"></div>
+        <div class="cr-inner">
+          <div><div class="cr-label">${ci?t('clockOut'):t('clockIn')}</div><div class="cr-sub">${ci?t('tapToEnd'):t('tapToStart')}</div></div>
+        </div>
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>${t('todaysLog')}</h3></div>
+    ${today.length?`<table><thead><tr><th>${t('colAction')}</th><th>${t('colTime')}</th></tr></thead><tbody>
+    ${today.map(a=>`<tr><td><strong>${a.type==='in'?t('clockedIn'):t('clockedOut')}</strong></td><td>${fmtT(a.timestamp)}</td></tr>`).join('')}
+    </tbody></table>`:`<div class="empty-row">${t('noActivityToday')}</div>`}
+  </div>`;}
+
+/* ── SHELL ── */
+function MGR_NAV(){return[
+  {k:'dashboard',l:t('navDashboard'),i:'▦'},{k:'team',l:t('navTeam'),i:'👥'},
+  {k:'interactions',l:t('navInteractions'),i:'💬'},{k:'performance',l:t('navPerformance'),i:'◈'},
+  {k:'goals',l:t('navGoals'),i:'🎯'},{k:'attendance',l:t('navAttendance'),i:'🕐'},
+  {k:'assistant',l:t('navAssistant'),i:'✦'},
+];}
+function EMP_NAV(){return[
+  {k:'profile',l:t('navProfile'),i:'●'},{k:'log',l:t('navLog'),i:'＋'},
+  {k:'history',l:t('navHistory'),i:'💬'},{k:'myPerf',l:t('navMyPerf'),i:'◈'},
+  {k:'myGoals',l:t('navMyGoals'),i:'🎯'},{k:'clock',l:t('navClock'),i:'🕐'},
+];}
+function TITLES(){return{
+  dashboard:t('titleDashboard'),team:t('titleTeam'),interactions:t('titleInteractions'),performance:t('titlePerformance'),
+  goals:t('titleGoals'),attendance:t('titleAttendance'),assistant:t('titleAssistant'),
+  profile:t('titleProfile'),log:t('titleLog'),history:t('titleHistory'),
+  myPerf:t('titleMyPerf'),myGoals:t('titleMyGoals'),clock:t('titleClock'),
+};}
+function SUBS(){return{
+  dashboard:t('subDashboard'),
+  team:t('subTeam'),
+  interactions:t('subInteractions'),
+  performance:t('subPerformance'),
+  goals:t('subGoals'),
+  attendance:t('subAttendance'),
+  assistant:t('subAssistant'),
+  profile:t('subProfile'),
+  log:t('subLog'),
+  history:t('subHistory'),
+  myPerf:t('subMyPerf'),
+  myGoals:t('subMyGoals'),
+  clock:t('subClock'),
+};}
+
+function sbHtml(){
+  const mgr=S.session.role==='manager';
+  const nav=mgr?MGR_NAV():EMP_NAV();
+  const who=mgr?t('manager'):(S.employees.find(e=>e.id===S.session.id)?.name||t('employee'));
+  const al=mgr?getAlerts().length:0;
+  return`<div class="sb">
+    <div class="sb-logo">
+      <div class="logo-mark">N</div>
+      <div class="logo-text">Ne<span>xus</span></div>
+    </div>
+    <div class="sb-user">
+      <div class="name">${esc(who)}</div>
+      <div class="role-tag">${mgr?t('manager'):t('employee')}</div>
+    </div>
+    <div class="sb-sec">${t('navigation')}</div>
+    <div class="sb-nav">
+      ${nav.map(n=>`<button class="sb-a ${S.route===n.k?'on':''}" onclick="navTo('${n.k}')">
+        <span class="sb-ic">${n.i}</span>${n.l}
+        ${n.k==='dashboard'&&al?`<span class="sb-badge">${al}</span>`:''}
+      </button>`).join('')}
+    </div>
+    <div class="sb-foot">
+      <button class="sb-foot-btn" onclick="setLang(S.lang==='ar'?'en':'ar')">🌐 ${S.lang==='ar'?'English':'العربية'}</button>
+      <button class="sb-foot-btn" onclick="logout()">${t('switchAccount')}</button>
+    </div>
+  </div>`;}
+
+function mainHtml(){
+  const mgr=S.session.role==='manager';
+  let content='';
+  if(mgr)content=({dashboard:vDashboard,team:vTeam,interactions:vInteractions,performance:vPerformance,goals:vGoals,attendance:vAttendance,assistant:vAssistant})[S.route]?.()||vDashboard();
+  else content=({profile:vProfile,log:vLog,history:vHistory,myPerf:vMyPerf,myGoals:vMyGoals,clock:vClock})[S.route]?.()||vProfile();
+  const TT=TITLES(),SS=SUBS();
+  return`<div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>${TT[S.route]||''}</h2>
+        <p>${SS[S.route]||''}</p>
+      </div>
+      <div class="topbar-right">
+        <div class="clock" id="live-clock"></div>
+      </div>
+    </div>
+    <div class="content">${content}</div>
+  </div>`;}
+
+function loginHtml(){
+  const ae=S.employees.filter(e=>e.status==='active');
+  return`<div class="lw">
+    <div class="lc">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px">
+        <div class="logo" style="margin-bottom:0"><div class="logo-mark">N</div><div class="logo-text">Ne<span>xus</span></div></div>
+        <button class="btn btn-ghost btn-sm" onclick="setLang(S.lang==='ar'?'en':'ar')">🌐 ${S.lang==='ar'?'English':'العربية'}</button>
+      </div>
+      <h1>${t('loginHeading')}</h1>
+      <p>${t('loginSub')}</p>
+      <div class="role-grid">
+        <button class="rb" onclick="loginMgr()"><span class="rbi">🏢</span><span class="rbl">${t('loginMgrLbl')}</span><span class="rbs">${t('loginMgrSub')}</span></button>
+        <button class="rb" onclick="document.getElementById('eb').style.display='block';this.closest('.role-grid').style.display='none'"><span class="rbi">👤</span><span class="rbl">${t('loginEmpLbl')}</span><span class="rbs">${t('loginEmpSub')}</span></button>
+      </div>
+      <div id="eb" class="emp-block">
+        <label class="field-label">${t('chooseName')}</label>
+        <select id="emp-sel" class="inp">
+          <option value="">${t('selectPlaceholder')}</option>
+          ${ae.map(e=>`<option value="${e.id}">${esc(e.name)} — ${esc(e.role)}</option>`).join('')}
+        </select>
+        <button class="btn btn-teal btn-go" onclick="loginEmp()">${t('continueBtn')}</button>
+        ${!ae.length?`<p style="font-size:11px;color:var(--t3);margin-top:12px;text-align:center">${t('noTeammates')}</p>`:''}
+      </div>
+      <p class="login-note">${t('loginNote')}</p>
+    </div>
+  </div>`;}
+
+function toastHtml(){
+  if(!S.toast)return'';
+  return`<div class="toast${S.toast.isErr?' err':''}">${esc(S.toast.msg)}</div>`;}
+
+function render(){
+  const root=document.getElementById('root');
+  if(!S.loaded){root.innerHTML=`<div class="lw"><div style="color:var(--t3);font-size:13px">${S.lang==='ar'?'جارٍ التحميل…':'Loading…'}</div></div>`;return;}
+  if(!S.session){root.innerHTML=loginHtml()+'<div id="modal-root"></div>'+toastHtml();return;}
+  if(S.session.role==='employee'&&!S.employees.some(e=>e.id===S.session.id&&e.status==='active')){S.session=null;render();return;}
+  root.innerHTML=`<div class="shell">${sbHtml()}${mainHtml()}</div><div id="modal-root"></div>${toastHtml()}`;
+  updateClock();
+  if(S.session.role==='manager'&&S.route==='dashboard')requestAnimationFrame(initCharts);
+  if(S.route==='assistant')requestAnimationFrame(scrollChat);
+}
+
+(async function(){render();await loadAll();render();})();
+</script>
+</body>
+</html>
